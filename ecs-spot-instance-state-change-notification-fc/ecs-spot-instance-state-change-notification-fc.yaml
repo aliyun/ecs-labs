@@ -1,0 +1,252 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Description: ''
+Parameters: {}
+Resources:
+  SLSProject:
+    Type: ALIYUN::SLS::Project
+    Properties:
+      Name:
+        Fn::Sub: aliyun-fc-${ALIYUN::Region}-${ALIYUN::StackId}
+  SLSLogstore:
+    Type: ALIYUN::SLS::Logstore
+    Properties:
+      ProjectName:
+        Fn::GetAtt:
+          - SLSProject
+          - Name
+      LogstoreName: function-log
+  SLSIndex:
+    Type: ALIYUN::SLS::Index
+    Properties:
+      ProjectName:
+        Fn::GetAtt:
+          - SLSProject
+          - Name
+      LogstoreName:
+        Fn::GetAtt:
+          - SLSLogstore
+          - LogstoreName
+      FullTextIndex:
+        Enable: true
+      KeyIndices:
+        - Name: instanceID
+        - Name: functionName
+        - Name: qualifier
+        - Name: serviceName
+        - Name: message
+  Queue:
+    Type: ALIYUN::MNS::Queue
+    Properties:
+      QueueName:
+        Fn::Join:
+          - '-'
+          - - StackId
+            - Ref: ALIYUN::StackId
+      MessageRetentionPeriod: 345600
+  Service:
+    DependsOn: FcDefaultRole
+    Type: ALIYUN::FC::Service
+    Properties:
+      ServiceName:
+        Fn::Join:
+          - '-'
+          - - StackId
+            - Ref: ALIYUN::StackId
+      LogConfig:
+        Logstore:
+          Fn::GetAtt:
+            - SLSLogstore
+            - LogstoreName
+        Project:
+          Fn::GetAtt:
+            - SLSProject
+            - Name
+      Role:
+        Fn::Sub:
+          - acs:ram::${ALIYUN::TenantId}:role/${FcDefaultRole}
+          - FcDefaultRole:
+              Fn::GetAtt:
+                - FcDefaultRole
+                - RoleName
+  Function:
+    DependsOn: Service
+    Type: ALIYUN::FC::Function
+    Properties:
+      ServiceName:
+        Fn::GetAtt:
+          - Service
+          - ServiceName
+      Code:
+        OssBucketName:
+          Fn::Sub: aliyun-spot-labs-${ALIYUN::Region}
+        OssObjectName: ecs-spot-instance-state-change-notification-fc.zip
+      Handler: index.handler
+      Runtime: python3
+      MemorySize: 512
+      FunctionName:
+        Fn::Join:
+          - '-'
+          - - StackId
+            - Ref: ALIYUN::StackId
+  EventEventBridgeRule:
+    Type: ALIYUN::EventBridge::Rule
+    DependsOn:
+      - Function
+      - Queue
+    Properties:
+      EventBusName: default
+      RuleName:
+        Fn::Join:
+          - '-'
+          - - StackId
+            - Ref: ALIYUN::StackId
+      Targets:
+        - Endpoint:
+            Fn::Sub:
+              - acs:fc:${ALIYUN::Region}:${ALIYUN::TenantId}:services/${FCFunctionName}.LATEST/functions/${FCFunctionName}
+              - FCFunctionName:
+                  Fn::Join:
+                    - '-'
+                    - - StackId
+                      - Ref: ALIYUN::StackId
+          Type: acs.fc.function
+          Id: fkYbPifRVUlvFqwJsCJIpqdDpA
+          ParamList:
+            - ResourceKey: serviceName
+              Value:
+                Fn::Join:
+                  - '-'
+                  - - StackId
+                    - Ref: ALIYUN::StackId
+              Form: CONSTANT
+            - ResourceKey: functionName
+              Value:
+                Fn::Join:
+                  - '-'
+                  - - StackId
+                    - Ref: ALIYUN::StackId
+              Form: CONSTANT
+            - ResourceKey: Body
+              Value: ''
+              Form: ORIGINAL
+            - ResourceKey: Qualifier
+              Value: LATEST
+              Form: CONSTANT
+            - ResourceKey: InvocationType
+              Value: Sync
+              Form: CONSTANT
+        - Endpoint:
+            Fn::Sub:
+              - acs:mns:${ALIYUN::Region}:${ALIYUN::TenantId}:queues/${MNSEvent}
+              - MNSEvent:
+                  Fn::Join:
+                    - '-'
+                    - - StackId
+                      - Ref: ALIYUN::StackId
+          Type: acs.mns.queue
+          Id: 9zaDh3n9GSZiuIAn0X86wdeqvj
+          ParamList:
+            - ResourceKey: queue
+              Value:
+                Fn::Join:
+                  - '-'
+                  - - StackId
+                    - Ref: ALIYUN::StackId
+              Form: CONSTANT
+            - ResourceKey: Body
+              Value: ''
+              Form: ORIGINAL
+            - ResourceKey: IsBase64Encode
+              Value: 'true'
+              Form: CONSTANT
+      FilterPattern:
+        source:
+          - acs.ecs
+        type:
+          - ecs:Instance:PreemptibleInstanceInterruption
+          - ecs:Instance:StateChange
+  FcDefaultRole:
+    Type: ALIYUN::RAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub: AliyunFcDefaultRole-${ALIYUN::StackId}
+      AssumeRolePolicyDocument:
+        Version: '1'
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - fc.aliyuncs.com
+      Policies:
+        - PolicyName:
+            Fn::Sub: FcDefaultRolePolicy-${ALIYUN::StackId}
+          PolicyDocument:
+            Version: '1'
+            Statement:
+              - Action:
+                  - vpc:DescribeVSwitchAttributes
+                  - vpc:DescribeVpcAttribute
+                Resource:
+                  - '*'
+                Effect: Allow
+              - Action:
+                  - ecs:CreateNetworkInterface
+                  - ecs:DeleteNetworkInterface
+                  - ecs:DescribeNetworkInterfaces
+                  - ecs:CreateNetworkInterfacePermission
+                  - ecs:DescribeNetworkInterfacePermissions
+                  - ecs:DeleteNetworkInterfacePermission
+                Resource:
+                  - '*'
+                Effect: Allow
+              - Action:
+                  - log:PostLogStoreLogs
+                Resource:
+                  - '*'
+                Effect: Allow
+              - Action:
+                  - cr:GetRepository
+                  - cr:GetRepositoryTag
+                  - cr:GetAuthorizationToken
+                  - cr:PullRepository
+                  - cr:GetRepoTagManifest
+                  - cr:GetRepositoryManifest
+                  - cr:GetArtifactTag
+                  - cr:GetInstanceVpcEndpoint
+                  - cr:GetInstance
+                  - cr:CreateArtifactBuildTask
+                  - cr:GetArtifactBuildRule
+                  - cr:GetNamespace
+                Resource:
+                  - '*'
+                Effect: Allow
+              - Action:
+                  - fc:InvokeFunction
+                  - mns:SendMessage
+                  - mns:PublishMessage
+                  - eventbridge:PutEvents
+                  - mq:PUB
+                  - mq:OnsInstanceBaseInfo
+                Resource:
+                  - '*'
+                Effect: Allow
+  AttachPolicyToRole1:
+    Type: ALIYUN::RAM::AttachPolicyToRole
+    Properties:
+      PolicyType: System
+      PolicyName: AliyunECSReadOnlyAccess
+      RoleName:
+        Fn::GetAtt:
+          - FcDefaultRole
+          - RoleName
+  AttachPolicyToRole2:
+    Type: ALIYUN::RAM::AttachPolicyToRole
+    Properties:
+      PolicyType: System
+      PolicyName: AliyunEventBridgeFullAccess
+      RoleName:
+        Fn::GetAtt:
+          - FcDefaultRole
+          - RoleName
+Outputs: {}
