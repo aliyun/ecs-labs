@@ -1,0 +1,78 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Description: ''
+Parameters:
+  KeyPairName:
+    Type: String
+    AssociationProperty: ALIYUN::ECS::KeyPair::KeyPairName
+Resources:
+  EcsVpc:
+    Type: ALIYUN::ECS::VPC
+    Properties:
+      CidrBlock: 192.168.0.0/16
+  EcsVSwitch:
+    Type: ALIYUN::ECS::VSwitch
+    Properties:
+      VpcId:
+        Ref: EcsVpc
+      ZoneId: cn-hangzhou-i
+      CidrBlock: 192.168.1.0/24
+  EcsSecurityGroup:
+    Type: ALIYUN::ECS::SecurityGroup
+    Properties:
+      VpcId:
+        Ref: EcsVpc
+  EssScalingGroup:
+    Type: ALIYUN::ESS::ScalingGroup
+    Properties:
+      LaunchTemplateId:
+        Fn::GetAtt:
+          - LaunchTemplate
+          - LaunchTemplateId
+      MinSize: 2
+      MaxSize: 2
+      DefaultCooldown: 300
+      ScalingGroupName:
+        Fn::Join:
+          - '-'
+          - - StackId
+            - Ref: ALIYUN::StackId
+            - ESS
+      VpcId:
+        Ref: EcsVpc
+      VSwitchId:
+        Ref: EcsVSwitch
+      MultiAZPolicy: PRIORITY
+      SpotInstanceRemedy: true
+      CompensateWithOnDemand: true
+      ScalingPolicy: release
+  EssScalingGroupEnable:
+    Type: ALIYUN::ESS::ScalingGroupEnable
+    Properties:
+      ScalingGroupId:
+        Fn::GetAtt:
+          - EssScalingGroup
+          - ScalingGroupId
+    DependsOn: EssScalingGroup
+  LaunchTemplate:
+    Type: ALIYUN::ECS::LaunchTemplate
+    Properties:
+      LaunchTemplateName:
+        Fn::Join:
+          - '-'
+          - - StackId
+            - Ref: ALIYUN::StackId
+            - Template
+      ImageId: ubuntu_18_04_x64_20G_alibase_20220428.vhd
+      InstanceType: ecs.xn4.small
+      SystemDiskCategory: cloud_ssd
+      SystemDiskSize: 40
+      SecurityGroupId:
+        Ref: EcsSecurityGroup
+      VSwitchId:
+        Ref: EcsVSwitch
+      SpotStrategy: SpotAsPriceGo
+      SpotDuration: 1
+      KeyPairName:
+        Ref: KeyPairName
+Outputs: {}
+Metadata: {}
