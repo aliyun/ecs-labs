@@ -250,3 +250,7 @@ Resources:
           - FcDefaultRole
           - RoleName
 Outputs: {}
+Metadata:
+  ALIYUN::ROS::Interface:
+    TemplateTags:
+      - acs:example:弹性计算:Spot实例状态通知
