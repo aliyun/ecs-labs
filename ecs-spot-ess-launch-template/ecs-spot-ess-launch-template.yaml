@@ -75,4 +75,7 @@ Resources:
       KeyPairName:
         Ref: KeyPairName
 Outputs: {}
-Metadata: {}
+Metadata:
+  ALIYUN::ROS::Interface:
+    TemplateTags:
+      - acs:example:Create_EcsSpotEssLaunchTemplate

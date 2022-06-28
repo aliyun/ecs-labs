@@ -250,3 +250,7 @@ Resources:
           - FcDefaultRole
           - RoleName
 Outputs: {}
+Metadata:
+  ALIYUN::ROS::Interface:
+    TemplateTags:
+      - acs:example:Create_EcsSpotInstanceStateChangeNotificationFc
