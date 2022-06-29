@@ -166,7 +166,7 @@ Resources:
           endDate:
             Ref: OOSExecutionEndDate
           timeZone: Asia/Shanghai
-          expression: 0 0 * ? * *
+          expression: 0 15 * ? * *
           type: cron
         templateParameters:
           regionId:
@@ -186,3 +186,7 @@ Resources:
           - Waiting
         CancelOnDelete: true
 Outputs: {}
+Metadata:
+  ALIYUN::ROS::Interface:
+    TemplateTags:
+      - acs:example:弹性计算:Spot实例使用FC监控价格
