@@ -1,0 +1,27 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+      annotations:
+        k8s.aliyun.com/eci-use-specs: "2-4Gi"  #根据需要替换您接受的ECS规格。
+        k8s.aliyun.com/eci-spot-strategy: "SpotAsPriceGo"  #随市场出价策略。
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.7.9
+          ports:
+            - containerPort: 80
+---
+

@@ -1,0 +1,195 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Description: ''
+Parameters: {}
+Outputs: {}
+Resources:
+  Function:
+    Type: ALIYUN::FC::Function
+    Properties:
+      Code:
+        OssBucketName:
+          Fn::Sub: aliyun-spot-labs-${ALIYUN::Region}
+        OssObjectName: ecs-spot-interruption-logging-insights.zip
+      FunctionName:
+        Ref: ALIYUN::StackName
+      ServiceName:
+        Fn::GetAtt:
+          - Service
+          - ServiceName
+      MemorySize: 512
+      Handler: index.handler
+      Runtime: python3
+      Timeout: 300
+      InitializationTimeout: 300
+    DependsOn: Service
+  EventEventBridgeRule:
+    Type: ALIYUN::EventBridge::Rule
+    Properties:
+      EventBusName: default
+      FilterPattern:
+        source:
+          - acs.ecs
+        type:
+          - ecs:Instance:PreemptibleInstanceInterruption
+      RuleName:
+        Ref: ALIYUN::StackName
+      Targets:
+        - Endpoint:
+            Fn::Sub:
+              - acs:fc:${ALIYUN::Region}:${ALIYUN::TenantId}:services/${FCFunctionName}.LATEST/functions/${FCFunctionName}
+              - FCFunctionName:
+                  Ref: ALIYUN::StackName
+          Type: acs.fc.function
+          Id: fkYbPifRVUlvFqwJsCJIpqdDpA
+          ParamList:
+            - ResourceKey: serviceName
+              Value:
+                Ref: ALIYUN::StackName
+              Form: CONSTANT
+            - ResourceKey: functionName
+              Value:
+                Ref: ALIYUN::StackName
+              Form: CONSTANT
+            - ResourceKey: Body
+              Value: ''
+              Form: ORIGINAL
+            - ResourceKey: Qualifier
+              Value: LATEST
+              Form: CONSTANT
+            - ResourceKey: InvocationType
+              Value: Sync
+              Form: CONSTANT
+    DependsOn:
+      - Function
+  Service:
+    Type: ALIYUN::FC::Service
+    Properties:
+      ServiceName:
+        Ref: ALIYUN::StackName
+      Role:
+        Fn::Sub:
+          - acs:ram::${ALIYUN::TenantId}:role/${FcDefaultRole}
+          - FcDefaultRole:
+              Fn::GetAtt:
+                - FcDefaultRole
+                - RoleName
+      LogConfig:
+        Logstore:
+          Fn::GetAtt:
+            - SLSLogstoreWithFc
+            - LogstoreName
+        Project:
+          Fn::GetAtt:
+            - SLSProjectWithFc
+            - Name
+    DependsOn:
+      - FcDefaultRole
+      - SLSProjectWithFc
+      - SLSLogstoreWithFc
+  SLSProjectWithFc:
+    Type: ALIYUN::SLS::Project
+    Properties:
+      Name:
+        Fn::Sub: spot-logs-with-fc-${ALIYUN::StackId}
+      Description: spot-interruption-logs-with-fc
+  SLSLogstoreWithFc:
+    Type: ALIYUN::SLS::Logstore
+    Properties:
+      LogstoreName: spot-interruption-logs-with-fc
+      ProjectName:
+        Fn::GetAtt:
+          - SLSProjectWithFc
+          - Name
+  SLSProject:
+    Type: ALIYUN::SLS::Project
+    Properties:
+      Name:
+        Fn::Sub: spot-interruption-logs-${ALIYUN::StackId}
+      Description: spot-interruption-logs
+  SLSLogstore:
+    Type: ALIYUN::SLS::Logstore
+    Properties:
+      LogstoreName: spot-interruption-logs
+      ProjectName:
+        Fn::GetAtt:
+          - SLSProject
+          - Name
+  SLSIndex:
+    Type: ALIYUN::SLS::Index
+    Properties:
+      ProjectName:
+        Fn::GetAtt:
+          - SLSProjectWithFc
+          - Name
+      LogstoreName:
+        Fn::GetAtt:
+          - SLSLogstoreWithFc
+          - LogstoreName
+      FullTextIndex:
+        Enable: true
+      KeyIndices:
+        - Name: instanceID
+        - Name: functionName
+        - Name: qualifier
+        - Name: serviceName
+        - Name: message
+  FcDefaultRole:
+    Type: ALIYUN::RAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub: AliyunFcDefaultRole-${ALIYUN::StackId}
+      Policies:
+        - PolicyName:
+            Fn::Sub: FcDefaultRolePolicy-${ALIYUN::StackId}
+          PolicyDocument:
+            Version: '1'
+            Statement:
+              - Action:
+                  - log:PostLogStoreLogs
+                Resource:
+                  - '*'
+                Effect: Allow
+              - Action:
+                  - fc:InvokeFunction
+                Resource:
+                  - '*'
+                Effect: Allow
+      AssumeRolePolicyDocument:
+        Version: '1'
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - fc.aliyuncs.com
+  AttachPolicyToRole1:
+    Type: ALIYUN::RAM::AttachPolicyToRole
+    Properties:
+      PolicyName: AliyunECSReadOnlyAccess
+      PolicyType: System
+      RoleName:
+        Fn::GetAtt:
+          - FcDefaultRole
+          - RoleName
+  AttachPolicyToRole3:
+    Type: ALIYUN::RAM::AttachPolicyToRole
+    Properties:
+      PolicyName: AliyunLogFullAccess
+      PolicyType: System
+      RoleName:
+        Fn::GetAtt:
+          - FcDefaultRole
+          - RoleName
+  AttachPolicyToRole2:
+    Type: ALIYUN::RAM::AttachPolicyToRole
+    Properties:
+      PolicyName: AliyunEventBridgeFullAccess
+      PolicyType: System
+      RoleName:
+        Fn::GetAtt:
+          - FcDefaultRole
+          - RoleName
+Metadata:
+  ALIYUN::ROS::Interface:
+    TemplateTags:
+      - acs:example:弹性计算:ecs_spot_interruption_logging_insights

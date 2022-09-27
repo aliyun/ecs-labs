@@ -1,0 +1,248 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Parameters:
+  ClusterId:
+    Type: String
+    Label:
+      zh-cn: ACK集群的ID
+      en: ACK Cluster ID
+  VSwitchZoneId:
+    AssociationProperty: ALIYUN::ECS::Instance:ZoneId
+    Type: String
+    Description:
+      zh-cn: 可用区ID。<br><b>注： <font color='blue'>选择前请确认该可用区是否支持创建ECS资源的规格，建议与其他交换机可用区不同</font></b>
+      en: Availability Zone ID.<br><b>note：<font color='blue'>before selecting, please confirm that the Availability Zone supports the specification of creating ECS resources,which is recommended to be different from other VSwitch Availability Zone</font></b>
+    Label:
+      zh-cn: 交换机可用区
+      en: VSwitch Availability Zone
+  VSwitch:
+    AssociationProperty: ALIYUN::ECS::VSwitch::VSwitchId
+    Type: String
+    Description:
+      zh-cn: 现有业务网络交换机的实例ID,控制台-VPC-专有网络-交换机下查询
+      en: Please search the business VSwitch ID starts with(vsw-xxx)from console-Virtual Private Cloud-VSwitches
+    Label:
+      zh-cn: 网络交换机ID
+      en: Existing VSwitch ID
+    AssociationPropertyMetadata:
+      ZoneId: VSwitchZoneId
+  SpotInstanceType:
+    Type: String
+    Label:
+      zh-cn: 实例规格
+      en: Instance Type
+  SpotSystemDiskCategory:
+    Label:
+      zh-cn: 系统盘类型
+      en: System Disk Type
+    Type: String
+    Description:
+      en: '<font color=''blue''><b>Optional values:</b></font><br>[cloud_efficiency: <font color=''green''>Efficient Cloud Disk</font>]<br>[cloud_ssd: <font color=''green''>SSD Cloud Disk</font>]<br>[cloud_essd: <font color=''green''>ESSD Cloud Disk</font>]<br>[cloud: <font color=''green''>Cloud Disk</font>]<br>[ephemeral_ssd: <font color=''green''>Local SSD Cloud Disk</font>]'
+      zh-cn: '<font color=''blue''><b>可选值：</b></font><br>[cloud_efficiency: <font color=''green''>高效云盘</font>]<br>[cloud_ssd: <font color=''green''>SSD云盘</font>]<br>[cloud_essd: <font color=''green''>ESSD云盘</font>]<br>[cloud: <font color=''green''>普通云盘</font>]<br>[ephemeral_ssd: <font color=''green''>本地SSD盘</font>]'
+    AllowedValues:
+      - cloud_auto
+      - cloud_efficiency
+      - cloud_ssd
+      - cloud
+      - cloud_essd
+      - ephemeral_ssd
+  SpotSystemDiskSize:
+    Default: 40
+    Type: Number
+    Description:
+      zh-cn: 系统盘大小, 取值范围：[40, 500], 单位：GB。
+      en: 'System disk size, range of values: 40-500, units: GB.'
+    Label:
+      zh-cn: 系统盘空间
+      en: System Disk Space
+  SpotKeyPairName:
+    Type: String
+    AssociationProperty: ALIYUN::ECS::KeyPair::KeyPairName
+    Label:
+      zh-cn: ECS实例密钥对
+      en: ECS KeyPairName
+  SpotMinInstances:
+    Type: Number
+    Default: 0
+    Label:
+      zh-cn: 自动伸缩组最小实例数
+      en: Minimum number of instances for an auto scaling group
+  SpotMaxInstances:
+    Type: Number
+    Default: 10
+    Label:
+      zh-cn: 自动伸缩组最大实例数
+      en: Maximum number of instances of an auto scaling group
+  PostPaidInstanceType:
+    Type: String
+    Label:
+      zh-cn: 实例规格
+      en: Instance Type
+  PostPaidSystemDiskCategory:
+    Label:
+      zh-cn: 系统盘类型
+      en: System Disk Type
+    Type: String
+    Description:
+      en: '<font color=''blue''><b>Optional values:</b></font><br>[cloud_efficiency: <font color=''green''>Efficient Cloud Disk</font>]<br>[cloud_ssd: <font color=''green''>SSD Cloud Disk</font>]<br>[cloud_essd: <font color=''green''>ESSD Cloud Disk</font>]<br>[cloud: <font color=''green''>Cloud Disk</font>]<br>[ephemeral_ssd: <font color=''green''>Local SSD Cloud Disk</font>]'
+      zh-cn: '<font color=''blue''><b>可选值：</b></font><br>[cloud_efficiency: <font color=''green''>高效云盘</font>]<br>[cloud_ssd: <font color=''green''>SSD云盘</font>]<br>[cloud_essd: <font color=''green''>ESSD云盘</font>]<br>[cloud: <font color=''green''>普通云盘</font>]<br>[ephemeral_ssd: <font color=''green''>本地SSD盘</font>]'
+    AllowedValues:
+      - cloud_auto
+      - cloud_efficiency
+      - cloud_ssd
+      - cloud
+      - cloud_essd
+      - ephemeral_ssd
+  PostPaidSystemDiskSize:
+    Default: 40
+    Type: Number
+    Description:
+      zh-cn: 系统盘大小, 取值范围：[40, 500], 单位：GB。
+      en: 'System disk size, range of values: 40-500, units: GB.'
+    Label:
+      zh-cn: 系统盘空间
+      en: System Disk Space
+  PostPaidKeyPairName:
+    Type: String
+    AssociationProperty: ALIYUN::ECS::KeyPair::KeyPairName
+    Label:
+      zh-cn: ECS实例密钥对
+      en: ECS KeyPairName
+  PostPaidMinInstances:
+    Type: Number
+    Default: 0
+    Label:
+      zh-cn: 自动伸缩组最小实例数
+      en: Minimum number of instances for an auto scaling group
+  PostPaidMaxInstances:
+    Type: Number
+    Default: 10
+    Label:
+      zh-cn: 自动伸缩组最大实例数
+      en: Maximum number of instances of an auto scaling group
+Resources:
+  SpotClusterNodePool:
+    Type: ALIYUN::CS::ClusterNodePool
+    Properties:
+      AutoScaling:
+        Type: spot
+        IsBondEip: false
+        MinInstances:
+          Ref: SpotMinInstances
+        Enable: true
+        MaxInstances:
+          Ref: SpotMaxInstances
+      ClusterId:
+        Ref: ClusterId
+      NodePoolInfo:
+        Name:
+          Fn::Join:
+            - '-'
+            - - Spot
+              - Ref: ALIYUN::StackId
+      KubernetesConfig:
+        CpuPolicy: none
+        Runtime: containerd
+        CmsEnabled: true
+        RuntimeVersion: 1.5.13
+        Unschedulable: false
+      Management:
+        Enable: true
+        AutoRepair: true
+        UpgradeConfig:
+          AutoUpgrade: true
+          MaxUnavailable: 1
+      ScalingGroup:
+        SpotInstancePools: 10
+        VSwitchIds:
+          - Ref: VSwitch
+        InstanceTypes:
+          - Ref: SpotInstanceType
+        InstanceChargeType: PostPaid
+        KeyPair:
+          Ref: SpotKeyPairName
+        SystemDiskCategory:
+          Ref: SpotSystemDiskCategory
+        SystemDiskSize:
+          Ref: SpotSystemDiskSize
+        SpotStrategy: SpotAsPriceGo
+        SpotInstanceRemedy: true
+        MultiAzPolicy: BALANCE
+        Platform: AliyunLinux
+        ImageId: aliyun_2_1903_x64_20G_alibase_20220701.vhd
+  PostPaidClusterNodePool:
+    Type: ALIYUN::CS::ClusterNodePool
+    Properties:
+      AutoScaling:
+        Type: cpu
+        IsBondEip: false
+        MinInstances:
+          Ref: PostPaidMinInstances
+        Enable: true
+        MaxInstances:
+          Ref: PostPaidMaxInstances
+      ClusterId:
+        Ref: ClusterId
+      NodePoolInfo:
+        Name:
+          Fn::Join:
+            - '-'
+            - - OnDemand
+              - Ref: ALIYUN::StackId
+      KubernetesConfig:
+        CpuPolicy: none
+        Runtime: containerd
+        CmsEnabled: true
+        RuntimeVersion: 1.5.13
+        Unschedulable: false
+      Management:
+        Enable: true
+        AutoRepair: true
+        UpgradeConfig:
+          AutoUpgrade: true
+          MaxUnavailable: 1
+      ScalingGroup:
+        VSwitchIds:
+          - Ref: VSwitch
+        InstanceTypes:
+          - Ref: PostPaidInstanceType
+        InstanceChargeType: PostPaid
+        KeyPair:
+          Ref: PostPaidKeyPairName
+        SystemDiskCategory:
+          Ref: PostPaidSystemDiskCategory
+        SystemDiskSize:
+          Ref: PostPaidSystemDiskSize
+        MultiAzPolicy: BALANCE
+        Platform: AliyunLinux
+        ScalingPolicy: release
+        ImageId: aliyun_2_1903_x64_20G_alibase_20220701.vhd
+Metadata:
+  ALIYUN::ROS::Interface:
+    ParameterGroups:
+      - Parameters:
+          - ClusterId
+          - VSwitchZoneId
+          - VSwitch
+        Label:
+          default: 公共配置
+      - Parameters:
+          - SpotInstanceType
+          - SpotSystemDiskCategory
+          - SpotSystemDiskSize
+          - SpotKeyPairName
+          - SpotMinInstances
+          - SpotMaxInstances
+        Label:
+          default: ECS抢占式实例配置
+      - Parameters:
+          - PostPaidInstanceType
+          - PostPaidSystemDiskCategory
+          - PostPaidSystemDiskSize
+          - PostPaidKeyPairName
+          - PostPaidMinInstances
+          - PostPaidMaxInstances
+        Label:
+          default: ECS按量付费实例配置
+    TemplateTags:
+      - acs:example:弹性计算:ACK集群使用spot
+Outputs: {}
