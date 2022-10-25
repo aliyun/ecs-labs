@@ -1,0 +1,79 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Description: ''
+Parameters: {}
+Outputs: {}
+Resources:
+  Function:
+    Type: 'ALIYUN::FC::Function'
+    Properties:
+      Code:
+        OssBucketName:
+          'Fn::Sub': 'aliyun-spot-labs-${ALIYUN::Region}'
+        OssObjectName: ecs-spot-interruption-handler.zip
+      FunctionName:
+        'Fn::Join':
+          - '-'
+          - - StackId
+            - Ref: 'ALIYUN::StackId'
+      ServiceName: ecs-spot-interruption-handler
+      MemorySize: 512
+      Handler: index.handler
+      Runtime: python3.9
+    DependsOn: Service
+  AutoEnableService:
+    Type: 'ALIYUN::ROS::AutoEnableService'
+    Properties:
+      ServiceName: SLS
+  EventEventBridgeRule:
+    Type: 'ALIYUN::EventBridge::Rule'
+    Properties:
+      EventBusName: default
+      FilterPattern:
+        source:
+          - acs.ecs
+        type:
+          - 'ecs:Instance:PreemptibleInstanceInterruption'
+      RuleName:
+        Ref: 'ALIYUN::StackName'
+      Targets:
+        - Endpoint:
+            'Fn::Sub':
+              - >-
+                acs:fc:${ALIYUN::Region}:${ALIYUN::TenantId}:services/${FCFunctionName}.LATEST/functions/${FCFunctionName}
+              - FCFunctionName:
+                  'Fn::Join':
+                    - '-'
+                    - - StackId
+                      - Ref: 'ALIYUN::StackId'
+          Type: acs.fc.function
+          Id: fkYbPifRVUlvFqwJsCJIpqdDpA
+          ParamList:
+            - ResourceKey: serviceName
+              Value: ecs-spot-interruption-handler
+              Form: CONSTANT
+            - ResourceKey: functionName
+              Value:
+                'Fn::Join':
+                  - '-'
+                  - - StackId
+                    - Ref: 'ALIYUN::StackId'
+              Form: CONSTANT
+            - ResourceKey: Body
+              Value: ''
+              Form: ORIGINAL
+            - ResourceKey: Qualifier
+              Value: LATEST
+              Form: CONSTANT
+            - ResourceKey: InvocationType
+              Value: Sync
+              Form: CONSTANT
+    DependsOn:
+      - Function
+  Service:
+    Type: 'ALIYUN::FC::Service'
+    Properties:
+      ServiceName: ecs-spot-interruption-handler
+Metadata:
+  'ALIYUN::ROS::Interface':
+    TemplateTags:
+      - 'acs:example:Create by Spot interruption handler'
