@@ -1,0 +1,292 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Description: ''
+Parameters:
+  VPC:
+    AssociationProperty: ALIYUN::ECS::VPC::VPCId
+    Type: String
+    Description:
+      zh-cn: 现有虚拟专有网络的实例ID,控制台-VPC-专有网络下查询
+      en: Please search the ID starts with (vpc-xxx)from console-Virtual Private Cloud
+    Label:
+      zh-cn: 现有VPC的实例ID
+      en: Existing VPC Instance ID
+  MasterVSwitchZoneId:
+    AssociationProperty: ALIYUN::ECS::Instance:ZoneId
+    Type: String
+    Description:
+      zh-cn: 可用区ID。<br><b>注： <font color='blue'>选择前请确认该可用区是否支持创建ECS资源的规格，建议与其他交换机可用区不同</font></b>
+      en: Availability Zone ID.<br><b>note：<font color='blue'>before selecting, please confirm that the Availability Zone supports the specification of creating ECS resources,which is recommended to be different from other VSwitch Availability Zone</font></b>
+    Label:
+      zh-cn: 交换机主可用区
+      en: VSwitch Availability Master Zone
+  VSwitch:
+    AssociationProperty: ALIYUN::ECS::VSwitch::VSwitchId
+    Type: String
+    Description:
+      zh-cn: 现有业务网络交换机的实例ID,控制台-VPC-专有网络-交换机下查询
+      en: Please search the business VSwitch ID starts with(vsw-xxx)from console-Virtual Private Cloud-VSwitches
+    Label:
+      zh-cn: 网络交换机ID
+      en: Existing VSwitch ID
+    AssociationPropertyMetadata:
+      VpcId: ${VPC}
+      ZoneId: ${MasterVSwitchZoneId}
+  SlaveVSwitchZoneId:
+    AssociationProperty: ALIYUN::ECS::Instance:ZoneId
+    Type: String
+    Description:
+      zh-cn: 可用区ID。<br><b>注： <font color='blue'>选择前请确认该可用区是否支持创建ECS资源的规格，建议与其他交换机可用区不同</font></b>
+      en: Availability Zone ID.<br><b>note：<font color='blue'>before selecting, please confirm that the Availability Zone supports the specification of creating ECS resources,which is recommended to be different from other VSwitch Availability Zone</font></b>
+    Label:
+      zh-cn: 交换机从可用区
+      en: VSwitch Availability Slave Zone
+  MessageRetentionPeriod:
+    Type: Number
+    Label:
+      zh-cn: 消息保存时长(单位：秒)
+      en: 'Message saving duration(Unit: second)'
+    Default: 345600
+Resources:
+  FcDefaultRole:
+    Type: ALIYUN::RAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub: AliyunFcDefaultRole-${ALIYUN::StackId}
+      AssumeRolePolicyDocument:
+        Version: '1'
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - fc.aliyuncs.com
+      Policies:
+        - PolicyName:
+            Fn::Sub: FcDefaultRolePolicy-${ALIYUN::StackId}
+          PolicyDocument:
+            Version: '1'
+            Statement:
+              - Action:
+                  - vpc:DescribeVSwitchAttributes
+                  - vpc:DescribeVpcAttribute
+                Resource:
+                  - '*'
+                Effect: Allow
+              - Action:
+                  - ecs:CreateNetworkInterface
+                  - ecs:DeleteNetworkInterface
+                  - ecs:DescribeNetworkInterfaces
+                  - ecs:CreateNetworkInterfacePermission
+                  - ecs:DescribeNetworkInterfacePermissions
+                  - ecs:DeleteNetworkInterfacePermission
+                Resource:
+                  - '*'
+                Effect: Allow
+              - Action:
+                  - log:PostLogStoreLogs
+                Resource:
+                  - '*'
+                Effect: Allow
+              - Action:
+                  - cr:GetRepository
+                  - cr:GetRepositoryTag
+                  - cr:GetAuthorizationToken
+                  - cr:PullRepository
+                  - cr:GetRepoTagManifest
+                  - cr:GetRepositoryManifest
+                  - cr:GetArtifactTag
+                  - cr:GetInstanceVpcEndpoint
+                  - cr:GetInstance
+                  - cr:CreateArtifactBuildTask
+                  - cr:GetArtifactBuildRule
+                  - cr:GetNamespace
+                Resource:
+                  - '*'
+                Effect: Allow
+              - Action:
+                  - fc:InvokeFunction
+                  - mns:SendMessage
+                  - mns:PublishMessage
+                  - eventbridge:PutEvents
+                  - mq:PUB
+                  - mq:OnsInstanceBaseInfo
+                Resource:
+                  - '*'
+                Effect: Allow
+  AttachPolicyToRole1:
+    Type: ALIYUN::RAM::AttachPolicyToRole
+    Properties:
+      PolicyType: System
+      PolicyName: AliyunECSReadOnlyAccess
+      RoleName:
+        Fn::GetAtt:
+          - FcDefaultRole
+          - RoleName
+  AttachPolicyToRole2:
+    Type: ALIYUN::RAM::AttachPolicyToRole
+    Properties:
+      PolicyType: System
+      PolicyName: AliyunSLBFullAccess
+      RoleName:
+        Fn::GetAtt:
+          - FcDefaultRole
+          - RoleName
+  Queue:
+    Type: ALIYUN::MNS::Queue
+    Properties:
+      QueueName:
+        Fn::Join:
+          - '-'
+          - - StackId
+            - Ref: ALIYUN::StackId
+      MessageRetentionPeriod:
+        Ref: MessageRetentionPeriod
+  Service:
+    Type: ALIYUN::FC::Service
+    Properties:
+      ServiceName: ecs-spot-interruption-notice-events
+      Role:
+        Fn::Sub:
+          - acs:ram::${ALIYUN::TenantId}:role/${FcDefaultRole}
+          - FcDefaultRole:
+              Fn::GetAtt:
+                - FcDefaultRole
+                - RoleName
+  Function:
+    DependsOn: Service
+    Type: ALIYUN::FC::Function
+    Properties:
+      ServiceName: ecs-spot-interruption-notice-events
+      Code:
+        OssBucketName:
+          Fn::Sub: aliyun-spot-labs-${ALIYUN::Region}
+        OssObjectName: ecs-spot-interruption-notice-events.zip
+      Handler: index.handler
+      Runtime: python3.9
+      MemorySize: 512
+      FunctionName:
+        Fn::Join:
+          - '-'
+          - - StackId
+            - Ref: ALIYUN::StackId
+  EventEventBridgeRule:
+    Type: ALIYUN::EventBridge::Rule
+    Properties:
+      EventBusName: default
+      FilterPattern:
+        source:
+          - acs.ecs
+        type:
+          - ecs:Instance:PreemptibleInstanceInterruption
+      RuleName:
+        Ref: ALIYUN::StackName
+      Targets:
+        - Endpoint:
+            Fn::Sub:
+              - acs:fc:${ALIYUN::Region}:${ALIYUN::TenantId}:services/${FCFunctionName}.LATEST/functions/${FCFunctionName}
+              - FCFunctionName:
+                  Fn::Join:
+                    - '-'
+                    - - StackId
+                      - Ref: ALIYUN::StackId
+          Type: acs.fc.function
+          Id: fkYbPifRVUlvFqwJsCJIpqdDpA
+          ParamList:
+            - ResourceKey: serviceName
+              Value: ecs-spot-interruption-notice-events
+              Form: CONSTANT
+            - ResourceKey: functionName
+              Value:
+                Fn::Join:
+                  - '-'
+                  - - StackId
+                    - Ref: ALIYUN::StackId
+              Form: CONSTANT
+            - ResourceKey: Body
+              Value: ''
+              Form: ORIGINAL
+            - ResourceKey: Qualifier
+              Value: LATEST
+              Form: CONSTANT
+            - ResourceKey: InvocationType
+              Value: Sync
+              Form: CONSTANT
+        - Endpoint:
+            Fn::Sub:
+              - acs:mns:${ALIYUN::Region}:${ALIYUN::TenantId}:queues/${MNSEvent}
+              - MNSEvent:
+                  Fn::GetAtt:
+                    - Queue
+                    - QueueName
+          Type: acs.mns.queue
+          Id: 9zaDh3n9GSZiuIAn0X86wdeqvj
+          ParamList:
+            - ResourceKey: queue
+              Value:
+                Fn::Join:
+                  - '-'
+                  - - StackId
+                    - Ref: ALIYUN::StackId
+              Form: CONSTANT
+            - ResourceKey: Body
+              Value: ''
+              Form: ORIGINAL
+            - ResourceKey: IsBase64Encode
+              Value: 'true'
+              Form: CONSTANT
+    DependsOn:
+      - Service
+      - Function
+      - Queue
+  LoadBalancer:
+    Type: ALIYUN::SLB::LoadBalancer
+    Properties:
+      LoadBalancerName: ecs-spot-interruption-notice-events
+      VpcId:
+        Ref: VPC
+      VSwitchId:
+        Ref: VSwitch
+      LoadBalancerSpec: slb.lcu.elastic
+      AddressType: internet
+      InstanceChargeType: PayByCLCU
+      AddressIPVersion: ipv4
+      PayType: PayOnDemand
+      SlaveZoneId:
+        Ref: SlaveVSwitchZoneId
+      MasterZoneId:
+        Ref: MasterVSwitchZoneId
+  VServerGroup:
+    Type: ALIYUN::SLB::VServerGroup
+    DependsOn:
+      - LoadBalancer
+    Properties:
+      VServerGroupName:
+        Ref: ALIYUN::StackName
+      LoadBalancerId:
+        Ref: LoadBalancer
+  SlbListener80:
+    Type: ALIYUN::SLB::Listener
+    Properties:
+      Protocol: tcp
+      Persistence:
+        StickySession: 'off'
+      HealthCheck:
+        URI: /
+        HealthyThreshold: 3
+        UnhealthyThreshold: 3
+        Interval: 2
+        Timeout: 5
+        HttpCode: http_2xx,http_3xx,http_4xx,http_5xx
+      ListenerPort: 80
+      Bandwidth: -1
+      BackendServerPort: 80
+      Scheduler: wrr
+      LoadBalancerId:
+        Ref: LoadBalancer
+      VServerGroupId:
+        Ref: VServerGroup
+Outputs: {}
+Metadata:
+  ALIYUN::ROS::Interface:
+    TemplateTags:
+      - acs:example:Create by Spot interruption notice events
