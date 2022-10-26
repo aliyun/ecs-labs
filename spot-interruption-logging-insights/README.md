@@ -21,4 +21,21 @@
     $ * | SELECT "InstanceDetails.InstanceType", COUNT(*) as number GROUP BY "InstanceDetails.InstanceType" LIMIT 1000
     ```
    ![](docs/spot-interruption-logging-insights-5.png?raw=true "create ros 4")
-    
+   
+   ![](docs/spot-interruption-logging-insights-1.gif?raw=true "create ros 5")
+
+### CLI 方式
+1. 在本地打开cli或者登陆[云命令行](https://shell.aliyun.com/?spm=5176.21213303.3291411370.3.1dd653c9LowBmg&scm=20140722.S_card@@%E4%BA%A7%E5%93%81@@527485._.ID_card@@%E4%BA%A7%E5%93%81@@527485-RL_cli-OR_ser-V_2-P0_0)
+2. 复制粘贴命令, 点击回车键
+    ```shell
+    $ aliyun ros CreateStack --StackName ecs-spot-ess-launch-template --TemplateURL https://raw.githubusercontent.com/aliyun/ecs-labs/master/spot-interruption-logging-insights/spot-interruption-logging-insights.yaml 
+    ```
+### 验证
+1. 点击回车建后是否返回RequestId和StackId
+   ![](docs/spot-interruption-logging-insights-6.png?raw=true "create ros 6")
+
+2. 复制粘贴命令，将${StackId}改为刚返回的StackId 查看资源栈状态 ，若status为CREATE_COMPLETE 表示资源栈创建成功
+    ```shell
+    $ aliyun ros GetStack --StackId ${StackId}
+    ```
+   ![](docs/spot-interruption-logging-insights-7.png?raw=true "create ros 7")
