@@ -19,12 +19,28 @@
    ![](docs/ecs-spot-interruption-handler-4.png?raw=true "create ros ")
 3. 当抢占式实例接收到中断通知后查看弹性伸缩组是否剥离实例
    ![](docs/ecs-spot-interruption-handler-5.png?raw=true "create ros ")
-   
+
 ### CLI 方式
-    //TODO
-   
+1. 在本地打开 [cli](https://help.aliyun.com/document_detail/139508.html) 或者登陆[云命令行](https://shell.aliyun.com/?spm=5176.21213303.3291411370.3.1dd653c9LowBmg&scm=20140722.S_card@@%E4%BA%A7%E5%93%81@@527485._.ID_card@@%E4%BA%A7%E5%93%81@@527485-RL_cli-OR_ser-V_2-P0_0)
+2. 复制粘贴命令, 点击回车键
+    ```shell
+    $ aliyun ros CreateStack --StackName ${user-StackName} --TemplateURL https://raw.githubusercontent.com/aliyun/ecs-labs/master/ecs-spot-interruption-handler/ecs-spot-interruption-handler.yaml
+    ```
+   ![](docs/ecs-spot-interruption-handler-8.png?raw=true "create ros ")
+
 ### 验证
-    //TODO
+1. 点击回车建后是否返回RequestId和StackId
+   ![](docs/ecs-spot-interruption-handler-9.png?raw=true "create ros ")
+2. 复制粘贴命令，将${StackId}改为刚返回的StackId 查看资源栈状态 ，若status为CREATE_COMPLETE 表示资源栈创建成功
+    ```shell
+    $ aliyun ros GetStack --StackId ${StackId}
+    ```
+   ![](docs/ecs-spot-interruption-handler-10.png?raw=true "create ros ")
+3. 复制粘贴命令，将${StackId}改为刚返回的StackId, 查看是否创建 [FC函数计算](https://fcnext.console.aliyun.com/overview)
+    ```shell
+   $ aliyun ros ListStackResources --StackId ${StackId}
+   ```
+   ![](docs/ecs-spot-interruption-handler-11.png?raw=true "create ros ")
    
 
 ## 联系我们

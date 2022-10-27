@@ -1,270 +1,221 @@
 ROSTemplateFormatVersion: '2015-09-01'
 Description: ''
 Parameters:
-  SystemDiskCategory:
-    AssociationProperty: 'ALIYUN::ECS::Disk::SystemDiskCategory'
-    AssociationPropertyMetadata:
-      InstanceType: '${InstanceType}'
-      ZoneId: '${VSwitchZoneId}'
-    Type: String
-    Description:
-      zh-cn: >-
-        <font color='blue'><b>可选值：</b></font><br>[cloud_efficiency: <font
-        color='green'>高效云盘</font>]<br>[cloud_ssd: <font
-        color='green'>SSD云盘</font>]<br>[cloud_essd: <font
-        color='green'>ESSD云盘</font>]<br>[cloud: <font
-        color='green'>普通云盘</font>]<br>[ephemeral_ssd: <font
-        color='green'>本地SSD盘</font>]
-      en: >-
-        <font color='blue'><b>Optional values:</b></font><br>[cloud_efficiency:
-        <font color='green'>Efficient Cloud Disk</font>]<br>[cloud_ssd: <font
-        color='green'>SSD Cloud Disk</font>]<br>[cloud_essd: <font
-        color='green'>ESSD Cloud Disk</font>]<br>[cloud: <font
-        color='green'>Cloud Disk</font>]<br>[ephemeral_ssd: <font
-        color='green'>Local SSD Cloud Disk</font>]
-    Label:
-      zh-cn: 系统盘类型
-      en: System Disk Type
-  SlaveVSwitchZoneId:
-    AssociationProperty: 'ALIYUN::ECS::Instance:ZoneId'
-    Type: String
-    Description:
-      zh-cn: >-
-        可用区ID。<br><b>注： <font
-        color='blue'>选择前请确认该可用区是否支持创建ECS资源的规格，建议与其他交换机可用区不同</font></b>
-      en: >-
-        Availability Zone ID.<br><b>note：<font color='blue'>before selecting,
-        please confirm that the Availability Zone supports the specification of
-        creating ECS resources,which is recommended to be different from other
-        VSwitch Availability Zone</font></b>
-    Label:
-      zh-cn: 负载均衡实例的从可用区ID
-      en: SLB Slave VSwitch Availability Zone
-  VSwitchZoneId:
-    AssociationProperty: 'ALIYUN::ECS::Instance:ZoneId'
-    Type: String
-    Description:
-      zh-cn: >-
-        可用区ID。<br><b>注： <font
-        color='blue'>选择前请确认该可用区是否支持创建ECS资源的规格，建议与其他交换机可用区不同</font></b>
-      en: >-
-        Availability Zone ID.<br><b>note：<font color='blue'>before selecting,
-        please confirm that the Availability Zone supports the specification of
-        creating ECS resources,which is recommended to be different from other
-        VSwitch Availability Zone</font></b>
-    Label:
-      zh-cn: 负载均衡实例的主可用区ID
-      en: SLB Master VSwitch Availability Zone
-  SecurityGroup:
-    AssociationProperty: 'ALIYUN::ECS::SecurityGroup::SecurityGroupId'
-    AssociationPropertyMetadata:
-      VpcId: '${VPC}'
-    Type: String
-    Description:
-      zh-cn: '现有业务安全组的实例ID,控制台-ECS-网络与安全-安全组下查询'
-      en: >-
-        Please search the business security group ID starting with(sg-xxx)from
-        console-ECS-Network & Security
-    Label:
-      zh-cn: 业务安全组ID
-      en: Business Security Group ID
   VPC:
-    AssociationProperty: 'ALIYUN::ECS::VPC::VPCId'
+    AssociationProperty: ALIYUN::ECS::VPC::VPCId
     Type: String
     Description:
-      zh-cn: '现有虚拟专有网络的实例ID,控制台-VPC-专有网络下查询'
-      en: >-
-        Please search the ID starts with (vpc-xxx)from console-Virtual Private
-        Cloud
+      zh-cn: 现有虚拟专有网络的实例ID,控制台-VPC-专有网络下查询
+      en: Please search the ID starts with (vpc-xxx)from console-Virtual Private Cloud
     Label:
       zh-cn: 现有VPC的实例ID
       en: Existing VPC Instance ID
-  VSwitch:
-    AssociationProperty: 'ALIYUN::ECS::VSwitch::VSwitchId'
-    AssociationPropertyMetadata:
-      VpcId: '${VPC}'
-      ZoneId: '${VSwitchZoneId}'
+  VSwitchZoneId:
+    AssociationProperty: ALIYUN::ECS::Instance:ZoneId
     Type: String
     Description:
-      zh-cn: '现有业务网络交换机的实例ID,控制台-VPC-专有网络-交换机下查询'
-      en: >-
-        Please search the business VSwitch ID starts with(vsw-xxx)from
-        console-Virtual Private Cloud-VSwitches
+      zh-cn: 可用区ID。<br><b>注： <font color='blue'>选择前请确认该可用区是否支持创建ECS资源的规格，建议与其他交换机可用区不同</font></b>
+      en: Availability Zone ID.<br><b>note：<font color='blue'>before selecting, please confirm that the Availability Zone supports the specification of creating ECS resources,which is recommended to be different from other VSwitch Availability Zone</font></b>
+    Label:
+      zh-cn: 负载均衡实例的主可用区ID
+      en: SLB Master VSwitch Availability Zone
+  SlaveVSwitchZoneId:
+    AssociationProperty: ALIYUN::ECS::Instance:ZoneId
+    Type: String
+    Description:
+      zh-cn: 可用区ID。<br><b>注： <font color='blue'>选择前请确认该可用区是否支持创建ECS资源的规格，建议与其他交换机可用区不同</font></b>
+      en: Availability Zone ID.<br><b>note：<font color='blue'>before selecting, please confirm that the Availability Zone supports the specification of creating ECS resources,which is recommended to be different from other VSwitch Availability Zone</font></b>
+    Label:
+      zh-cn: 负载均衡实例的从可用区ID
+      en: SLB Slave VSwitch Availability Zone
+  VSwitch:
+    AssociationProperty: ALIYUN::ECS::VSwitch::VSwitchId
+    Type: String
+    Description:
+      zh-cn: 现有业务网络交换机的实例ID,控制台-VPC-专有网络-交换机下查询
+      en: Please search the business VSwitch ID starts with(vsw-xxx)from console-Virtual Private Cloud-VSwitches
     Label:
       zh-cn: 网络交换机ID
       en: Existing VSwitch ID
-  LoadBalancerSpec:
     AssociationPropertyMetadata:
-      ZoneId: '${VSwitchZoneId}'
+      VpcId: ${VPC}
+      ZoneId: ${VSwitchZoneId}
+  SecurityGroup:
+    AssociationProperty: ALIYUN::ECS::SecurityGroup::SecurityGroupId
+    Type: String
     Description:
-      zh-cn: >-
-        slb实例规格</br>详见：</b><a
-        href='https://help.aliyun.com/document_detail/85939.html'
-        target='_blank'><b><font color='blue'>性能保障型</b></font></a>
-      en: >-
-        Instance specifications</br>see detail：</b><a
-        href='https://www.alibabacloud.com/help/doc-detail/85939.html'
-        target='_blank'><b><font color='blue'>Performance Support
-        Type</b></font></a>
-    Default: slb.lcu.elastic
+      zh-cn: 现有业务安全组的实例ID,控制台-ECS-网络与安全-安全组下查询
+      en: Please search the business security group ID starting with(sg-xxx)from console-ECS-Network & Security
     Label:
-      zh-cn: 负载均衡规格
-      en: Specifications
-    AssociationProperty: 'ALIYUN::SLB::Instance::InstanceType'
-    Type: String
-  InstanceType:
-    AssociationProperty: 'ALIYUN::ECS::Instance::InstanceType'
+      zh-cn: 业务安全组ID
+      en: Business Security Group ID
     AssociationPropertyMetadata:
-      ZoneId: '${VSwitchZoneId}'
+      VpcId: ${VPC}
+  InstanceType:
+    AssociationProperty: ALIYUN::ECS::Instance::InstanceType
+    AssociationPropertyMetadata:
+      ZoneId: ${VSwitchZoneId}
     Type: String
     Description:
-      zh-cn: >-
-        填写VSwitch可用区下可使用的规格；<br>通用规格：<font
-        color='red'><b>ecs.c5.large</b></font><br>注：可用区可能不支持通用规格<br>规格详见：<a
-        href='https://help.aliyun.com/document_detail/25378.html'
-        target='_blank'><b><font color='blue'>实例规格族</font></a></b>
-      en: >-
-        Fill in the specifications that can be used under the VSwitch
-        availability zone;</b></font><br>general specifications：<font
-        color='red'><b>ecs.c5.large</b></font><br>note: a few zones do not
-        support general specifications<br>see detail: <a
-        href='https://www.alibabacloud.com/help/en/doc-detail/25378.html'
-        target='_blank'><b><font color='blue'>Instance Specification
-        Family</font></a></b>
+      zh-cn: 填写VSwitch可用区下可使用的规格；<br>通用规格：<font color='red'><b>ecs.c5.large</b></font><br>注：可用区可能不支持通用规格<br>规格详见：<a href='https://help.aliyun.com/document_detail/25378.html' target='_blank'><b><font color='blue'>实例规格族</font></a></b>
+      en: 'Fill in the specifications that can be used under the VSwitch availability zone;</b></font><br>general specifications：<font color=''red''><b>ecs.c5.large</b></font><br>note: a few zones do not support general specifications<br>see detail: <a href=''https://www.alibabacloud.com/help/en/doc-detail/25378.html'' target=''_blank''><b><font color=''blue''>Instance Specification Family</font></a></b>'
     Label:
       zh-cn: 实例规格
       en: Instance Type
-  KeyPairName:
-    AssociationProperty: 'ALIYUN::ECS::KeyPair::KeyPairName'
+  SystemDiskCategory:
+    Label:
+      zh-cn: 系统盘类型
+      en: System Disk Type
     Type: String
-Outputs: {}
+    Description:
+      en: '<font color=''blue''><b>Optional values:</b></font><br>[cloud_efficiency: <font color=''green''>Efficient Cloud Disk</font>]<br>[cloud_ssd: <font color=''green''>SSD Cloud Disk</font>]<br>[cloud_essd: <font color=''green''>ESSD Cloud Disk</font>]<br>[cloud: <font color=''green''>Cloud Disk</font>]<br>[ephemeral_ssd: <font color=''green''>Local SSD Cloud Disk</font>]'
+      zh-cn: '<font color=''blue''><b>可选值：</b></font><br>[cloud_efficiency: <font color=''green''>高效云盘</font>]<br>[cloud_ssd: <font color=''green''>SSD云盘</font>]<br>[cloud_essd: <font color=''green''>ESSD云盘</font>]<br>[cloud: <font color=''green''>普通云盘</font>]<br>[ephemeral_ssd: <font color=''green''>本地SSD盘</font>]'
+    AssociationProperty: ALIYUN::ECS::Disk::SystemDiskCategory
+    AssociationPropertyMetadata:
+      ZoneId: ${VSwitchZoneId}
+      InstanceType: ${InstanceType}
+  LoadBalancerSpec:
+    Type: String
+    AssociationProperty: ALIYUN::SLB::Instance::InstanceType
+    AssociationPropertyMetadata:
+      ZoneId: ${VSwitchZoneId}
+    Description:
+      en: Instance specifications</br>see detail：</b><a href='https://www.alibabacloud.com/help/doc-detail/85939.html' target='_blank'><b><font color='blue'>Performance Support Type</b></font></a>
+      zh-cn: slb实例规格</br>详见：</b><a href='https://help.aliyun.com/document_detail/85939.html' target='_blank'><b><font color='blue'>性能保障型</b></font></a>
+    Label:
+      en: Specifications
+      zh-cn: 负载均衡规格
+    Default: slb.lcu.elastic
+  KeyPairName:
+    Type: String
+    AssociationProperty: ALIYUN::ECS::KeyPair::KeyPairName
 Resources:
+  LoadBalancer:
+    Type: ALIYUN::SLB::LoadBalancer
+    Properties:
+      LoadBalancerName: ros-test-1
+      LoadBalancerSpec:
+        Ref: LoadBalancerSpec
+      InstanceChargeType: PayByCLCU
+      SlaveZoneId:
+        Ref: SlaveVSwitchZoneId
+      MasterZoneId:
+        Ref: VSwitchZoneId
+      VSwitchId:
+        Ref: VSwitch
+      VpcId:
+        Ref: VPC
+  VServerGroup:
+    Type: ALIYUN::SLB::VServerGroup
+    DependsOn:
+      - LoadBalancer
+    Properties:
+      VServerGroupName: ros-test-2
+      LoadBalancerId:
+        Ref: LoadBalancer
   SlbListener80:
-    Type: 'ALIYUN::SLB::Listener'
+    Type: ALIYUN::SLB::Listener
     Properties:
       Protocol: tcp
+      Persistence:
+        StickySession: 'off'
       HealthCheck:
-        Interval: 2
         URI: /
-        UnhealthyThreshold: 3
         HealthyThreshold: 3
+        UnhealthyThreshold: 3
+        Interval: 2
         Timeout: 5
-        HttpCode: 'http_2xx,http_3xx,http_4xx,http_5xx'
+        HttpCode: http_2xx,http_3xx,http_4xx,http_5xx
       ListenerPort: 80
       Bandwidth: -1
       BackendServerPort: 80
       Scheduler: wrr
       LoadBalancerId:
         Ref: LoadBalancer
-      Persistence:
-        StickySession: 'off'
       VServerGroupId:
         Ref: VServerGroup
-  LaunchTemplate:
-    Type: 'ALIYUN::ECS::LaunchTemplate'
-    Properties:
-      SystemDiskCategory:
-        Ref: SystemDiskCategory
-      Tags:
-        - Value: true
-          Key: SpotInterruptionHandler/enabled
-      SecurityGroupId:
-        Ref: SecurityGroup
-      LaunchTemplateName:
-        'Fn::Join':
-          - '-'
-          - - StackId
-            - Ref: 'ALIYUN::StackId'
-            - Template
-      SystemDiskSize: 40
-      ImageId: centos_8_4_x64_20G_alibase_20211027.vhd
-      InstanceChargeType: PostPaid
-      VSwitchId:
-        Ref: VSwitch
-      SpotStrategy: SpotAsPriceGo
-      ZoneId:
-        Ref: VSwitchZoneId
-      InstanceType:
-        Ref: InstanceType
-      KeyPairName:
-        Ref: KeyPairName
-  OosParameter:
-    Type: 'ALIYUN::OOS::Parameter'
-    Properties:
-      Type: String
-      Description: Prefix for Interruption Handler parameters
-      Value: echo hello world
-      Name:
-        'Fn::Join':
-          - ''
-          - - >-
-              /ecs-spot-interruption-handler/run_commands/ros-test-SampleWebAppAutoScalingGroup-
-            - Ref: 'ALIYUN::StackId'
   EssScalingGroup:
-    Type: 'ALIYUN::ESS::ScalingGroup'
-    Properties:
-      MultiAZPolicy: COST_OPTIMIZED
-      VpcId:
-        Ref: VPC
-      DesiredCapacity: 2
-      ScalingPolicy: release
-      LaunchTemplateId:
-        'Fn::GetAtt':
-          - LaunchTemplate
-          - LaunchTemplateId
-      OnDemandPercentageAboveBaseCapacity: 30
-      ScalingGroupName:
-        'Fn::Join':
-          - '-'
-          - - StackId
-            - Ref: 'ALIYUN::StackId'
-            - ESS
-      MinSize: 0
-      CompensateWithOnDemand: false
-      MaxSize: 10
-      SpotInstancePools: 3
-      VSwitchId:
-        Ref: VSwitch
-      LoadBalancerIds:
-        - 'Fn::GetAtt':
-            - LoadBalancer
-            - LoadBalancerId
-      SpotInstanceRemedy: true
-      OnDemandBaseCapacity: 0
     DependsOn:
       - SlbListener80
+    Type: ALIYUN::ESS::ScalingGroup
+    Properties:
+      LoadBalancerIds:
+        - Fn::GetAtt:
+            - LoadBalancer
+            - LoadBalancerId
+      LaunchTemplateId:
+        Fn::GetAtt:
+          - LaunchTemplate
+          - LaunchTemplateId
+      MinSize: 0
+      MaxSize: 10
+      DesiredCapacity: 2
+      ScalingGroupName:
+        Fn::Join:
+          - '-'
+          - - StackId
+            - Ref: ALIYUN::StackId
+            - ESS
+      VpcId:
+        Ref: VPC
+      VSwitchId:
+        Ref: VSwitch
+      MultiAZPolicy: COST_OPTIMIZED
+      SpotInstanceRemedy: true
+      CompensateWithOnDemand: false
+      ScalingPolicy: release
+      SpotInstancePools: 3
+      OnDemandPercentageAboveBaseCapacity: 30
+      OnDemandBaseCapacity: 0
   EssScalingGroupEnable:
-    Type: 'ALIYUN::ESS::ScalingGroupEnable'
+    Type: ALIYUN::ESS::ScalingGroupEnable
     Properties:
       ScalingGroupId:
-        'Fn::GetAtt':
+        Fn::GetAtt:
           - EssScalingGroup
           - ScalingGroupId
     DependsOn: EssScalingGroup
-  VServerGroup:
-    Type: 'ALIYUN::SLB::VServerGroup'
+  LaunchTemplate:
+    Type: ALIYUN::ECS::LaunchTemplate
     Properties:
-      VServerGroupName: ros-test-2
-      LoadBalancerId:
-        Ref: LoadBalancer
-    DependsOn:
-      - LoadBalancer
-  LoadBalancer:
-    Type: 'ALIYUN::SLB::LoadBalancer'
-    Properties:
-      VpcId:
-        Ref: VPC
-      SlaveZoneId:
-        Ref: SlaveVSwitchZoneId
-      InstanceChargeType: PayByCLCU
+      LaunchTemplateName:
+        Fn::Join:
+          - '-'
+          - - StackId
+            - Ref: ALIYUN::StackId
+            - Template
+      ImageId: centos_8_4_x64_20G_alibase_20211027.vhd
+      InstanceType:
+        Ref: InstanceType
+      SystemDiskCategory:
+        Ref: SystemDiskCategory
+      SystemDiskSize: 40
+      SecurityGroupId:
+        Ref: SecurityGroup
       VSwitchId:
         Ref: VSwitch
-      LoadBalancerName: ros-test-1
-      LoadBalancerSpec:
-        Ref: LoadBalancerSpec
-      MasterZoneId:
+      ZoneId:
         Ref: VSwitchZoneId
+      InstanceChargeType: PostPaid
+      SpotStrategy: SpotAsPriceGo
+      KeyPairName:
+        Ref: KeyPairName
+      Tags:
+        - Value: true
+          Key: SpotInterruptionHandler/enabled
+  OosParameter:
+    Type: ALIYUN::OOS::Parameter
+    Properties:
+      Type: String
+      Value: echo hello world
+      Description: Prefix for Interruption Handler parameters
+      Name:
+        Fn::Join:
+          - ''
+          - - /ecs-spot-interruption-handler/run_commands/ros-test-SampleWebAppAutoScalingGroup-
+            - Ref: ALIYUN::StackId
+Outputs: {}
 Metadata:
-  'ALIYUN::ROS::Interface':
+  ALIYUN::ROS::Interface:
     TemplateTags:
-      - 'acs:example:Create by ess spot'
+      - acs:example:Create by Spot Ess
