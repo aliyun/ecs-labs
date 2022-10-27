@@ -24,7 +24,7 @@
   ![](docs/ecs-spot-price-monitoring-with-fc-2.png?raw=true "create ros 4")
   ![](docs/ecs-spot-price-monitoring-with-fc-3.gif?raw=true "create ros 5")
 ### CLI 方式  
-1. 在本地打开cli或者登陆[云命令行](https://shell.aliyun.com/?spm=5176.21213303.3291411370.3.1dd653c9LowBmg&scm=20140722.S_card@@%E4%BA%A7%E5%93%81@@527485._.ID_card@@%E4%BA%A7%E5%93%81@@527485-RL_cli-OR_ser-V_2-P0_0)
+1. 在本地打开 [cli](https://help.aliyun.com/document_detail/139508.html) 或者登陆[云命令行](https://shell.aliyun.com/?spm=5176.21213303.3291411370.3.1dd653c9LowBmg&scm=20140722.S_card@@%E4%BA%A7%E5%93%81@@527485._.ID_card@@%E4%BA%A7%E5%93%81@@527485-RL_cli-OR_ser-V_2-P0_0)
 2. 复制粘贴命令, 将${endDate}改为您的希望定时任务结束的事件如 2022-06-22T01:51:38Z ， 点击回车键
     ```shell
     $ aliyun ros CreateStack --StackName ecs-spot-price-monitoring-with-fc --TemplateURL https://raw.githubusercontent.com/aliyun/ecs-labs/master/ecs-spot-price-monitoring/ecs-spot-price-monitoring-with-fc.yaml --Parameters.1.ParameterKey OOSExecutionEndDate --Parameters.1.ParameterValue ${endDate}

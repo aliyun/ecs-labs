@@ -21,7 +21,7 @@
    ![](docs/ecs-spot-ess-launch-template-3.gif?raw=true "create ros 6")
 
 ### CLI 方式
-1. 在本地打开cli或者登陆[云命令行](https://shell.aliyun.com/?spm=5176.21213303.3291411370.3.1dd653c9LowBmg&scm=20140722.S_card@@%E4%BA%A7%E5%93%81@@527485._.ID_card@@%E4%BA%A7%E5%93%81@@527485-RL_cli-OR_ser-V_2-P0_0)
+1. 在本地打开 [cli](https://help.aliyun.com/document_detail/139508.html) 或者登陆[云命令行](https://shell.aliyun.com/?spm=5176.21213303.3291411370.3.1dd653c9LowBmg&scm=20140722.S_card@@%E4%BA%A7%E5%93%81@@527485._.ID_card@@%E4%BA%A7%E5%93%81@@527485-RL_cli-OR_ser-V_2-P0_0)
 2. 复制粘贴命令, 将${user-KeyPairName}改为您的密钥对名称，若没有则[创建密钥对](https://ecs.console.aliyun.com/?spm=5176.13689198.0.0.2c6b2068XsSV7r#/keyPair/region/cn-hangzhou/create?createType=default) 点击回车键
     ```shell
     $ aliyun ros CreateStack --StackName ecs-spot-ess-launch-template --TemplateURL https://raw.githubusercontent.com/aliyun/ecs-labs/master/ecs-spot-ess-launch-template/ecs-spot-ess-launch-template.yaml --Parameters.1.ParameterKey KeyPairName --Parameters.1.ParameterValue ${user-KeyPairName}
