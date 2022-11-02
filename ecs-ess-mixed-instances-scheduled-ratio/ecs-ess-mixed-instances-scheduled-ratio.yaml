@@ -1,0 +1,216 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Description: ''
+Parameters:
+  VPC:
+    AssociationProperty: ALIYUN::ECS::VPC::VPCId
+    Type: String
+    Description:
+      zh-cn: 现有虚拟专有网络的实例ID,控制台-VPC-专有网络下查询
+      en: Please search the ID starts with (vpc-xxx)from console-Virtual Private Cloud
+    Label:
+      zh-cn: 现有VPC的实例ID
+      en: Existing VPC Instance ID
+  VSwitchZoneId:
+    AssociationProperty: ALIYUN::ECS::Instance:ZoneId
+    Type: String
+    Description:
+      zh-cn: 可用区ID。<br><b>注： <font color='blue'>选择前请确认该可用区是否支持创建ECS资源的规格，建议与其他交换机可用区不同</font></b>
+      en: Availability Zone ID.<br><b>note：<font color='blue'>before selecting, please confirm that the Availability Zone supports the specification of creating ECS resources,which is recommended to be different from other VSwitch Availability Zone</font></b>
+    Label:
+      zh-cn: ECS启动模板创建实例所属的可用区ID
+      en: ECS Template Instance Availability Zone
+  VSwitch:
+    AssociationProperty: ALIYUN::ECS::VSwitch::VSwitchId
+    Type: String
+    Description:
+      zh-cn: 现有业务网络交换机的实例ID,控制台-VPC-专有网络-交换机下查询
+      en: Please search the business VSwitch ID starts with(vsw-xxx)from console-Virtual Private Cloud-VSwitches
+    Label:
+      zh-cn: 网络交换机ID
+      en: Existing VSwitch ID
+    AssociationPropertyMetadata:
+      VpcId: ${VPC}
+      ZoneId: ${VSwitchZoneId}
+  SecurityGroup:
+    AssociationProperty: ALIYUN::ECS::SecurityGroup::SecurityGroupId
+    Type: String
+    Description:
+      zh-cn: 现有业务安全组的实例ID,控制台-ECS-网络与安全-安全组下查询
+      en: Please search the business security group ID starting with(sg-xxx)from console-ECS-Network & Security
+    Label:
+      zh-cn: 业务安全组ID
+      en: Business Security Group ID
+    AssociationPropertyMetadata:
+      VpcId: ${VPC}
+  ImageId:
+    Type: String
+    Description:
+      en: Image Id, represents the image resource to startup one ECS instance, <a href='https://help.aliyun.com/document_detail/100410.html' target='_blank'>View image resources</a>.
+      zh-cn: 镜像ID，详情请参考<a href='https://help.aliyun.com/document_detail/100410.html' target='_blank'>公共镜像</a>。
+    Label:
+      zh-cn: 模板镜像ID
+      en: ECS Template Image Id
+    Default: centos_8_4_x64_20G_alibase_20211027.vhd
+  InstanceType:
+    AssociationProperty: ALIYUN::ECS::Instance::InstanceType
+    AssociationPropertyMetadata:
+      ZoneId: ${VSwitchZoneId}
+    Type: String
+    Description:
+      zh-cn: 填写VSwitch可用区下可使用的规格；<br>通用规格：<font color='red'><b>ecs.c5.large</b></font><br>注：可用区可能不支持通用规格<br>规格详见：<a href='https://help.aliyun.com/document_detail/25378.html' target='_blank'><b><font color='blue'>实例规格族</font></a></b>
+      en: 'Fill in the specifications that can be used under the VSwitch availability zone;</b></font><br>general specifications：<font color=''red''><b>ecs.c5.large</b></font><br>note: a few zones do not support general specifications<br>see detail: <a href=''https://www.alibabacloud.com/help/en/doc-detail/25378.html'' target=''_blank''><b><font color=''blue''>Instance Specification Family</font></a></b>'
+    Label:
+      zh-cn: 实例规格
+      en: Instance Type
+  SystemDiskCategory:
+    Label:
+      zh-cn: 系统盘类型
+      en: System Disk Type
+    Type: String
+    Description:
+      en: '<font color=''blue''><b>Optional values:</b></font><br>[cloud_efficiency: <font color=''green''>Efficient Cloud Disk</font>]<br>[cloud_ssd: <font color=''green''>SSD Cloud Disk</font>]<br>[cloud_essd: <font color=''green''>ESSD Cloud Disk</font>]<br>[cloud: <font color=''green''>Cloud Disk</font>]<br>[ephemeral_ssd: <font color=''green''>Local SSD Cloud Disk</font>]'
+      zh-cn: '<font color=''blue''><b>可选值：</b></font><br>[cloud_efficiency: <font color=''green''>高效云盘</font>]<br>[cloud_ssd: <font color=''green''>SSD云盘</font>]<br>[cloud_essd: <font color=''green''>ESSD云盘</font>]<br>[cloud: <font color=''green''>普通云盘</font>]<br>[ephemeral_ssd: <font color=''green''>本地SSD盘</font>]'
+    AssociationProperty: ALIYUN::ECS::Disk::SystemDiskCategory
+    AssociationPropertyMetadata:
+      ZoneId: ${VSwitchZoneId}
+      InstanceType: ${InstanceType}
+  EssMinSize:
+    Type: Number
+    Default: 2
+    Label:
+      zh-cn: 伸缩组内ECS实例个数的最小值
+      en: The minimum number of ECS instances in the scaling group
+  EssMaxSize:
+    Type: Number
+    Default: 5
+    Label:
+      zh-cn: 伸缩组内ECS实例个数的最大值
+      en: Maximum number of ECS instances in the scaling group
+  EssSpotInstancePools:
+    Type: Number
+    Default: 3
+    Label:
+      zh-cn: 伸缩组可用实例规格的个数
+      en: Number of available instance specifications of the scaling group
+  EssOnDemandPercentageAboveBaseCapacity:
+    Type: Number
+    Default: 50
+    Label:
+      zh-cn: 伸缩组按量实例应占的比例（取值范围：0～100）
+      en: Proportion of expansion group by quantity instances
+Resources:
+  Topic:
+    Type: ALIYUN::MNS::Topic
+    Properties:
+      TopicName:
+        Fn::Join:
+          - '-'
+          - - StackId
+            - Ref: ALIYUN::StackId
+  EssScalingGroup:
+    Type: ALIYUN::ESS::ScalingGroup
+    Properties:
+      LaunchTemplateId:
+        Fn::GetAtt:
+          - LaunchTemplate
+          - LaunchTemplateId
+      MinSize:
+        Ref: EssMinSize
+      MaxSize:
+        Ref: EssMaxSize
+      ScalingGroupName:
+        Ref: ALIYUN::StackName
+      VpcId:
+        Ref: VPC
+      VSwitchId:
+        Ref: VSwitch
+      MultiAZPolicy: COST_OPTIMIZED
+      SpotInstanceRemedy: false
+      CompensateWithOnDemand: true
+      ScalingPolicy: release
+      SpotInstancePools:
+        Ref: EssSpotInstancePools
+      OnDemandPercentageAboveBaseCapacity:
+        Ref: EssOnDemandPercentageAboveBaseCapacity
+      OnDemandBaseCapacity: 1
+  EssScalingGroupEnable:
+    Type: ALIYUN::ESS::ScalingGroupEnable
+    Properties:
+      ScalingGroupId:
+        Fn::GetAtt:
+          - EssScalingGroup
+          - ScalingGroupId
+    DependsOn: EssScalingGroup
+  LaunchTemplate:
+    Type: ALIYUN::ECS::LaunchTemplate
+    Properties:
+      LaunchTemplateName:
+        Ref: ALIYUN::StackName
+      ImageId:
+        Ref: ImageId
+      InstanceType:
+        Ref: InstanceType
+      SystemDiskCategory:
+        Ref: SystemDiskCategory
+      SystemDiskSize: 40
+      SecurityGroupId:
+        Ref: SecurityGroup
+      VSwitchId:
+        Ref: VSwitch
+      ZoneId:
+        Ref: VSwitchZoneId
+      Tags:
+        - Value: ecs-ess-mixed-instances-scheduled-ratio
+          Key:
+            Ref: ALIYUN::StackName
+  Service:
+    Type: ALIYUN::FC::Service
+    Properties:
+      ServiceName:
+        Ref: ALIYUN::StackName
+  Function:
+    DependsOn: Service
+    Type: ALIYUN::FC::Function
+    Properties:
+      ServiceName:
+        Ref: ALIYUN::StackName
+      Code:
+        OssBucketName:
+          Fn::Sub: aliyun-spot-labs-${ALIYUN::Region}
+        OssObjectName: ecs-ess-mixed-instances-scheduled-ratio.zip
+      Handler: index.handler
+      Runtime: python3.9
+      MemorySize: 512
+      FunctionName:
+        Ref: ALIYUN::StackName
+  Trigger:
+    DependsOn: Function
+    Type: ALIYUN::FC::Trigger
+    Properties:
+      InvocationRole:
+        Fn::Sub:
+          - acs:ram::${AccountId}:role/aliyunmnsnotificationrole
+          - AccountId:
+              Ref: ALIYUN::TenantId
+      SourceArn:
+        Fn::Sub:
+          - acs:mns:${ALIYUN::Region}:${ALIYUN::TenantId}:/topics/${TopicName}
+          - TopicName:
+              Fn::GetAtt:
+                - Topic
+                - TopicName
+      ServiceName:
+        Ref: ALIYUN::StackName
+      FunctionName:
+        Ref: ALIYUN::StackName
+      TriggerName:
+        Ref: ALIYUN::StackName
+      TriggerType: mns_topic
+      TriggerConfig:
+        NotifyContentFormat: STREAM
+        NotifyStrategy: BACKOFF_RETRY
+Outputs: {}
+Metadata:
+  ALIYUN::ROS::Interface:
+    TemplateTags:
+      - acs:example:Create by Spot ess mixed instances scheduled ratio
