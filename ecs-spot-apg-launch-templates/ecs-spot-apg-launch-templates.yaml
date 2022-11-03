@@ -1,0 +1,77 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Description: ''
+Parameters:
+  KeyPairName:
+    Type: String
+    AssociationProperty: ALIYUN::ECS::KeyPair::KeyPairName
+  TotalTargetCapacity:
+    Type: String
+    Description: |-
+      The total target capacity of the auto provisioning group. The target capacity consists
+      of the following three parts:
+      The target capacity of pay-as-you-go instances specified by the PayAsYouGoTargetCapacity parameter
+      The target capacity of preemptible instances specified by the SpotTargetCapacity parameter
+      The supplemental capacity besides PayAsYouGoTargetCapacity and SpotTargetCapacity
+    Default: '2'
+Resources:
+  EcsVpc:
+    Type: ALIYUN::ECS::VPC
+    Properties:
+      CidrBlock: 192.168.0.0/16
+  EcsVSwitch:
+    Type: ALIYUN::ECS::VSwitch
+    Properties:
+      VpcId:
+        Ref: EcsVpc
+      ZoneId: cn-hangzhou-i
+      CidrBlock: 192.168.1.0/24
+  EcsSecurityGroup:
+    Type: ALIYUN::ECS::SecurityGroup
+    Properties:
+      VpcId:
+        Ref: EcsVpc
+  LaunchTemplate:
+    Type: ALIYUN::ECS::LaunchTemplate
+    Properties:
+      LaunchTemplateName:
+        Fn::Join:
+          - '-'
+          - - StackId
+            - Ref: ALIYUN::StackId
+            - Template
+      ImageId: ubuntu_18_04_x64_20G_alibase_20220428.vhd
+      InstanceType: ecs.s6-c1m1.small
+      SystemDiskCategory: cloud_ssd
+      SystemDiskSize: 40
+      SecurityGroupId:
+        Ref: EcsSecurityGroup
+      VSwitchId:
+        Ref: EcsVSwitch
+      SpotStrategy: SpotAsPriceGo
+      SpotDuration: 1
+      KeyPairName:
+        Ref: KeyPairName
+  AutoProvisioningGroup:
+    DependsOn: LaunchTemplate
+    Type: ALIYUN::ECS::AutoProvisioningGroup
+    Properties:
+      LaunchTemplateId:
+        Fn::GetAtt:
+          - LaunchTemplate
+          - LaunchTemplateId
+      LaunchTemplateVersion: '1'
+      TotalTargetCapacity:
+        Ref: TotalTargetCapacity
+      PayAsYouGoTargetCapacity: 0
+      SpotTargetCapacity: 0
+      AutoProvisioningGroupName: ros-test-apg
+      LaunchTemplateConfig:
+        - Priority: 1
+          WeightedCapacity: 1
+          VSwitchId:
+            Ref: EcsVSwitch
+Outputs: {}
+Metadata:
+  ALIYUN::ROS::Interface:
+    TemplateTags:
+      - acs:example:Create by Spot apg launch templates

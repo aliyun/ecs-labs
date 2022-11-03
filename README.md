@@ -26,8 +26,16 @@ Alibaba Cloud Ecs labs is a collection of code examples and scripts that illustr
 
 * ### [ecs-spot-price-monitoring](https://github.com/aliyun/ecs-labs/tree/master/ecs-spot-price-monitoring)
     此实验用来演示：如何通过 [ROS模板](https://ros.console.aliyun.com/cn-hangzhou/stacks) 每隔一小时查询已创建的抢占式实例规格的价格并把信息上传至 [云监控自定义监控](https://cms.console.aliyun.com/custom-monitoring/_all) 中方便查看已创建的抢占式实例价格变化
+
 * ### [spot-interruption-logging-insights](https://github.com/aliyun/ecs-labs/tree/master/spot-interruption-logging-insights)
     此实验用来演示: 如何通过 [ROS模板](https://ros.console.aliyun.com/cn-hangzhou/stacks) 监听当前地域下抢占式实例的中断警告，一旦实例处于待回收状态，则将您需要的有关实例的任何详细信息，并默认的 InstanceId、InstanceType 和所有标签等信息 投递到[日志服务](https://sls.console.aliyun.com/lognext/profile) 中， 然后，此信息可用于通过 sls 开发可视化。
+
+* ### [ecs-ess-mixed-instances-scheduled-ratio](https://github.com/aliyun/ecs-labs/tree/master/ecs-ess-mixed-instances-scheduled-ratio)
+    此实验用来演示: 如何通过 [ROS模板](https://ros.console.aliyun.com/cn-hangzhou/stacks), 使用 [MNS主题](https://mns.console.aliyun.com/region/cn-hangzhou/topics) 调整 [弹性伸缩组](https://essnew.console.aliyun.com/?spm=5176.2020520101fleet.203.dess.617d4df57dewWa#/v3/group/list/cn-hangzhou) 按量实例和抢占式实例比例
+
+* ### [ecs-spot-apg-launch-templates](https://github.com/aliyun/ecs-labs/tree/master/ecs-spot-apg-launch-templates)
+    此实验用来演示: 如何通过 [ROS模板](https://ros.console.aliyun.com/cn-hangzhou/stacks), 使用指定 [启动模版](https://help.aliyun.com/document_detail/73916.html?spm=a2c4g.11186623.0.0.7f8651d3NdvxB5) 的 [弹性供应](https://help.aliyun.com/document_detail/120020.html) 快速快速部署抢占式实例集群
+
 
 ## Contribute & Reporting bugs - 贡献代码&报告代码缺陷
 You can open issues if you want to contribute to this project or report bugs.
