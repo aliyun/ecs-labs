@@ -1,0 +1,108 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Description: ''
+Parameters:
+  ZoneId1:
+    AssociationProperty: ALIYUN::ECS::Instance::ZoneId
+    Type: String
+    Description:
+      zh-cn: 可用区ID。
+      en: Availability Zone ID.
+    Label:
+      zh-cn: 交换机1可用区
+      en: VSwitch1 Availability Zone
+  ZoneId2:
+    AssociationProperty: ALIYUN::ECS::Instance::ZoneId
+    Type: String
+    Description:
+      zh-cn: 可用区ID。
+      en: Availability Zone ID.
+    Label:
+      zh-cn: 交换机2可用区
+      en: VSwitch2 Availability Zone
+  ZoneId3:
+    AssociationProperty: ALIYUN::ECS::Instance::ZoneId
+    Type: String
+    Description:
+      zh-cn: 可用区ID。
+      en: Availability Zone ID.
+    Label:
+      zh-cn: 交换机3可用区
+      en: VSwitch3 Availability Zone
+  TotalTargetCapacity:
+    Type: String
+    Description: |-
+      The total target capacity of the auto provisioning group. The target capacity consists
+      of the following three parts:
+      The target capacity of pay-as-you-go instances specified by the PayAsYouGoTargetCapacity parameter
+      The target capacity of preemptible instances specified by the SpotTargetCapacity parameter
+      The supplemental capacity besides PayAsYouGoTargetCapacity and SpotTargetCapacity
+    Default: '3'
+Resources:
+  EcsVpc:
+    Type: ALIYUN::ECS::VPC
+    Properties:
+      CidrBlock: 192.168.0.0/16
+  EcsVSwitch1:
+    Type: ALIYUN::ECS::VSwitch
+    Properties:
+      VpcId:
+        Ref: EcsVpc
+      ZoneId:
+        Ref: ZoneId1
+      CidrBlock: 192.168.1.0/24
+  EcsVSwitch2:
+    Type: ALIYUN::ECS::VSwitch
+    Properties:
+      VpcId:
+        Ref: EcsVpc
+      ZoneId:
+        Ref: ZoneId2
+      CidrBlock: 192.168.2.0/24
+  EcsVSwitch3:
+    Type: ALIYUN::ECS::VSwitch
+    Properties:
+      VpcId:
+        Ref: EcsVpc
+      ZoneId:
+        Ref: ZoneId3
+      CidrBlock: 192.168.3.0/24
+  EcsSecurityGroup:
+    Type: ALIYUN::ECS::SecurityGroup
+    Properties:
+      VpcId:
+        Ref: EcsVpc
+  AutoProvisioningGroup:
+    Type: ALIYUN::ECS::AutoProvisioningGroup
+    Properties:
+      LaunchConfiguration:
+        ImageId: centos_8_4_x64_20G_alibase_20211027.vhd
+        SecurityGroupId:
+          Ref: EcsSecurityGroup
+        SystemDiskCategory: cloud_essd
+      SpotAllocationStrategy: diversified
+      TotalTargetCapacity:
+        Ref: TotalTargetCapacity
+      PayAsYouGoTargetCapacity: 0
+      SpotTargetCapacity: 0
+      AutoProvisioningGroupName: ros-test-apg
+      LaunchTemplateConfig:
+        - Priority: 1
+          WeightedCapacity: 2
+          VSwitchId:
+            Ref: EcsVSwitch1
+          InstanceType: ecs.xn4.small
+        - Priority: 1
+          WeightedCapacity: 1.1
+          VSwitchId:
+            Ref: EcsVSwitch2
+          InstanceType: ecs.c5.large
+        - Priority: 1
+          WeightedCapacity: 1.1
+          VSwitchId:
+            Ref: EcsVSwitch3
+          InstanceType: ecs.c6.large
+Outputs: {}
+Metadata:
+  ALIYUN::ROS::Interface:
+    TemplateTags:
+      - acs:example:弹性计算:ecs-spot-ess-instance-weighting
